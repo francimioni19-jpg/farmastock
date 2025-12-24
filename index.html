@@ -8,21 +8,24 @@
 <body>
 
 <div class="sidebar">
-    <h2>FarmaStock</h2>
+    <h2>💊 FarmaStock</h2>
     <ul>
         <li onclick="mostrarInicio()">🏠 Inicio</li>
-        <li onclick="mostrarProductos()">📦 Productos</li>
-        <li onclick="mostrarVencimientos()">💊 Alertas</li>
-        <li onclick="mostrarVentas()">🧾 Ventas</li>
+        <li onclick="mostrarProductos()">📦 Stock</li>
+        <li onclick="mostrarVencimientos()">⚠️ Alertas</li>
+        <li onclick="mostrarVentas()">💰 Ventas</li>
         <li onclick="mostrarProveedores()">🚚 Proveedores</li>
-        <li onclick="mostrarReportes()">📊 Reportes ⭐</li>
-        <li onclick="mostrarConfiguracion()">⚙️ Configuración</li>
+        <li onclick="mostrarReportes()">📊 Reportes PRO</li>
+        <li onclick="mostrarConfiguracion()">⚙️ Opciones</li>
         <li onclick="logout()">🚪 Salir</li>
     </ul>
 </div>
 
-<div class="main" id="contenido"></div>
+<div class="main">
+    <div id="contenido"></div>
+</div>
 
 <script src="app.js"></script>
 </body>
 </html>
+
