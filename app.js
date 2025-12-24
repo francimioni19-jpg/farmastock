@@ -1,8 +1,37 @@
-/* ================= LOGIN REAL ================= */
-let usuarios = JSON.parse(localStorage.getItem("usuarios")) || [];
-let usuarioActual = JSON.parse(localStorage.getItem("usuarioActual"));
+/* ========= IDIOMA ========= */
+let idioma = localStorage.getItem("idioma") || "es";
 
-if (!usuarioActual) {
+const textos = {
+    es: {
+        login: "Ingreso a FarmaStock",
+        email: "Email",
+        pass: "Contraseña",
+        ingresar: "Ingresar / Registrarse",
+        resumen: "Resumen del negocio",
+        productos: "Productos",
+        ventas: "Ventas",
+        alertas: "Alertas",
+        config: "Configuración",
+        pro: "Modo PRO activado"
+    },
+    en: {
+        login: "FarmaStock Login",
+        email: "Email",
+        pass: "Password",
+        ingresar: "Login / Register",
+        resumen: "Business summary",
+        productos: "Products",
+        ventas: "Sales",
+        alertas: "Alerts",
+        config: "Settings",
+        pro: "PRO Mode activated"
+    }
+};
+
+/* ========= LOGIN ========= */
+let usuario = JSON.parse(localStorage.getItem("usuario"));
+
+if (!usuario) {
     mostrarLogin();
 } else {
     mostrarInicio();
@@ -10,15 +39,15 @@ if (!usuarioActual) {
 
 function mostrarLogin() {
     document.getElementById("contenido").innerHTML = `
-        <h2>Ingreso a FarmaStock</h2>
-        <input id="email" placeholder="Email"><br>
-        <input id="pass" type="password" placeholder="Contraseña"><br>
-        <button class="btn" onclick="login()">Ingresar / Registrarse</button>
+        <h2>${textos[idioma].login}</h2>
+        <input id="email" placeholder="${textos[idioma].email}"><br>
+        <input id="pass" type="password" placeholder="${textos[idioma].pass}"><br>
+        <button class="btn" onclick="login()">${textos[idioma].ingresar}</button>
     `;
 }
 
 function login() {
-    const email = emailInput.value = document.getElementById("email").value;
+    const email = email.value;
     const pass = document.getElementById("pass").value;
 
     if (!email || !pass) {
@@ -26,54 +55,34 @@ function login() {
         return;
     }
 
-    let user = usuarios.find(u => u.email === email);
-
-    if (!user) {
-        user = { email, pass, pro: false };
-        usuarios.push(user);
-        localStorage.setItem("usuarios", JSON.stringify(usuarios));
-    } else if (user.pass !== pass) {
-        alert("Contraseña incorrecta");
-        return;
-    }
-
-    usuarioActual = user;
-    localStorage.setItem("usuarioActual", JSON.stringify(user));
+    usuario = { email, pass, pro: false };
+    localStorage.setItem("usuario", JSON.stringify(usuario));
     mostrarInicio();
 }
 
 function logout() {
-    localStorage.removeItem("usuarioActual");
+    localStorage.removeItem("usuario");
     location.reload();
 }
 
-/* ================= DATOS ================= */
+/* ========= DATOS ========= */
 let productos = JSON.parse(localStorage.getItem("productos")) || [];
 let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
 let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
 
-/* ================= INICIO ================= */
+/* ========= INICIO ========= */
 function mostrarInicio() {
     document.getElementById("contenido").innerHTML = `
-        <h2>Resumen del negocio</h2>
+        <h2>${textos[idioma].resumen}</h2>
         <div class="cards">
-            <div class="card">
-                <h3>Productos</h3>
-                <p>${productos.length}</p>
-            </div>
-            <div class="card">
-                <h3>Stock Bajo</h3>
-                <p>${productos.filter(p => p.cantidad <= p.minimo).length}</p>
-            </div>
-            <div class="card">
-                <h3>Por vencer</h3>
-                <p>${productos.filter(p => diasParaVencer(p.vencimiento) <= 7).length}</p>
-            </div>
+            <div class="card">📦 Productos: ${productos.length}</div>
+            <div class="card">⚠️ Alertas: ${productos.filter(p => alertaVencimiento(p) || alertaStock(p)).length}</div>
+            <div class="card">💰 Ventas: ${ventas.length}</div>
         </div>
     `;
 }
 
-/* ================= PRODUCTOS ================= */
+/* ========= PRODUCTOS ========= */
 function mostrarProductos() {
     let filas = productos.map((p, i) => `
         <tr>
@@ -81,22 +90,21 @@ function mostrarProductos() {
             <td>${p.cantidad}</td>
             <td>${p.minimo}</td>
             <td>${p.vencimiento}</td>
-            <td>${p.codigo}</td>
+            <td><button onclick="eliminarProducto(${i})">❌</button></td>
         </tr>
     `).join("");
 
     document.getElementById("contenido").innerHTML = `
-        <h2>Productos</h2>
+        <h2>📦 Stock</h2>
         <input id="nombre" placeholder="Nombre"><br>
         <input id="cantidad" type="number" placeholder="Cantidad"><br>
         <input id="minimo" type="number" placeholder="Stock mínimo"><br>
         <input id="vencimiento" type="date"><br>
-        <input id="codigo" placeholder="Código de barras"><br>
         <button class="btn" onclick="agregarProducto()">Agregar</button>
 
-        <table border="1" cellpadding="5">
+        <table border="1">
             <tr>
-                <th>Producto</th><th>Cantidad</th><th>Mínimo</th><th>Vence</th><th>Código</th>
+                <th>Producto</th><th>Cantidad</th><th>Mínimo</th><th>Vence</th><th></th>
             </tr>
             ${filas}
         </table>
@@ -108,104 +116,120 @@ function agregarProducto() {
         nombre: nombre.value,
         cantidad: Number(cantidad.value),
         minimo: Number(minimo.value),
-        vencimiento: vencimiento.value,
-        codigo: codigo.value
+        vencimiento: vencimiento.value
     });
-    localStorage.setItem("productos", JSON.stringify(productos));
+    guardar();
     mostrarProductos();
 }
 
-/* ================= ALERTAS ================= */
+function eliminarProducto(i) {
+    productos.splice(i, 1);
+    guardar();
+    mostrarProductos();
+}
+
+/* ========= ALERTAS ========= */
 function diasParaVencer(fecha) {
     return Math.ceil((new Date(fecha) - new Date()) / 86400000);
 }
 
+function alertaVencimiento(p) {
+    return diasParaVencer(p.vencimiento) <= 7;
+}
+
+function alertaStock(p) {
+    return p.cantidad <= p.minimo;
+}
+
 function mostrarVencimientos() {
-    let lista = productos.map(p => {
-        if (p.cantidad <= p.minimo)
-            return `<li>⚠️ Stock bajo: ${p.nombre}</li>`;
-        if (diasParaVencer(p.vencimiento) <= 7)
-            return `<li>⏰ Por vencer: ${p.nombre}</li>`;
-        return "";
-    }).join("");
+    let lista = productos
+        .filter(p => alertaVencimiento(p) || alertaStock(p))
+        .map(p => `
+            <li>
+                ${p.nombre} 
+                ${alertaVencimiento(p) ? "⚠️ Vence pronto" : ""}
+                ${alertaStock(p) ? "📉 Stock bajo" : ""}
+            </li>
+        `).join("");
 
     document.getElementById("contenido").innerHTML = `
-        <h2>Alertas</h2>
-        <ul>${lista || "<li>No hay alertas</li>"}</ul>
+        <h2>⚠️ Alertas</h2>
+        <ul>${lista || "<li>Sin alertas</li>"}</ul>
     `;
 }
 
-/* ================= VENTAS (DESCUENTA STOCK) ================= */
+/* ========= VENTAS ========= */
 function mostrarVentas() {
-    let opciones = productos.map((p, i) =>
-        `<option value="${i}">${p.nombre}</option>`
-    ).join("");
+    let lista = ventas.map(v => `<li>${v.fecha} - ${v.producto}</li>`).join("");
 
     document.getElementById("contenido").innerHTML = `
-        <h2>Ventas</h2>
-        <select id="prod">${opciones}</select><br>
-        <input id="cantVenta" type="number" placeholder="Cantidad"><br>
-        <button class="btn" onclick="registrarVenta()">Registrar venta</button>
-    `;
-}
-
-function registrarVenta() {
-    let i = prod.value;
-    let c = Number(cantVenta.value);
-
-    if (productos[i].cantidad < c) {
-        alert("Stock insuficiente");
-        return;
-    }
-
-    productos[i].cantidad -= c;
-    ventas.push({ producto: productos[i].nombre, cantidad: c, fecha: new Date() });
-
-    localStorage.setItem("productos", JSON.stringify(productos));
-    localStorage.setItem("ventas", JSON.stringify(ventas));
-    mostrarVentas();
-}
-
-/* ================= PROVEEDORES ================= */
-function mostrarProveedores() {
-    let lista = proveedores.map(p => `<li>${p.nombre} - ${p.tel}</li>`).join("");
-
-    document.getElementById("contenido").innerHTML = `
-        <h2>Proveedores</h2>
-        <input id="pn" placeholder="Nombre"><br>
-        <input id="pt" placeholder="Teléfono"><br>
-        <button class="btn" onclick="agregarProveedor()">Agregar</button>
+        <h2>💰 Ventas</h2>
+        <select id="ventaProducto">
+            ${productos.map((p, i) => `<option value="${i}">${p.nombre}</option>`).join("")}
+        </select>
+        <button class="btn" onclick="registrarVenta()">Vender</button>
         <ul>${lista}</ul>
     `;
 }
 
-function agregarProveedor() {
-    proveedores.push({ nombre: pn.value, tel: pt.value });
-    localStorage.setItem("proveedores", JSON.stringify(proveedores));
-    mostrarProveedores();
+function registrarVenta() {
+    let i = ventaProducto.value;
+    if (productos[i].cantidad <= 0) {
+        alert("Sin stock");
+        return;
+    }
+
+    productos[i].cantidad--;
+    ventas.push({ producto: productos[i].nombre, fecha: new Date().toLocaleString() });
+    guardar();
+    mostrarVentas();
 }
 
-/* ================= PRO BLOQUEADO ================= */
+/* ========= PRO ========= */
 function mostrarReportes() {
-    if (!usuarioActual.pro) {
+    if (!usuario.pro) {
         document.getElementById("contenido").innerHTML = `
-            <h2>Modo PRO</h2>
-            <p>🔒 Función solo para usuarios PRO</p>
+            <h2>📊 Reportes PRO</h2>
+            <p>Disponible solo en versión PRO</p>
+            <button class="btn" onclick="activarPro()">Activar PRO</button>
         `;
         return;
     }
 
     document.getElementById("contenido").innerHTML = `
-        <h2>Reportes PRO</h2>
+        <h2>📊 Reportes PRO</h2>
+        <p>Productos: ${productos.length}</p>
         <p>Ventas: ${ventas.length}</p>
     `;
 }
 
-/* ================= CONFIG ================= */
+function activarPro() {
+    usuario.pro = true;
+    localStorage.setItem("usuario", JSON.stringify(usuario));
+    mostrarReportes();
+}
+
+/* ========= CONFIG ========= */
 function mostrarConfiguracion() {
     document.getElementById("contenido").innerHTML = `
-        <h2>Configuración</h2>
-        <p>Usuario: ${usuarioActual.email}</p>
-        <p>Plan: ${usuarioActual.pro ? "PRO" : "Gratis"}</p>
+        <h2>⚙️ Opciones</h2>
+        <p>Usuario: ${usuario.email}</p>
+        <select onchange="cambiarIdioma(this.value)">
+            <option value="es" ${idioma==="es"?"selected":""}>Español</option>
+            <option value="en" ${idioma==="en"?"selected":""}>English</option>
+        </select>
     `;
 }
+
+function cambiarIdioma(id) {
+    idioma = id;
+    localStorage.setItem("idioma", idioma);
+    mostrarInicio();
+}
+
+function guardar() {
+    localStorage.setItem("productos", JSON.stringify(productos));
+    localStorage.setItem("ventas", JSON.stringify(ventas));
+    localStorage.setItem("proveedores", JSON.stringify(proveedores));
+}
+
