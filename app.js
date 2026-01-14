@@ -5,11 +5,13 @@ let usuario = null;
 /* =====================
    AUTH
 ===================== */
-auth.onAuthStateChanged(user => {
+auth.onAuthStateChanged((user) => {
     if (user) {
         usuario = user;
+        document.getElementById("menu").style.display = "block";
         mostrarInicio();
     } else {
+        document.getElementById("menu").style.display = "none";
         mostrarLogin();
     }
 });
@@ -305,5 +307,3 @@ function mostrarReportes() {
         <p>Reportes avanzados próximamente</p>
     `;
 }
-
-
