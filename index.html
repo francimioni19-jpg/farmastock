@@ -23,22 +23,29 @@
     <div id="contenido"></div>
 </div>
 
-<!-- 🔥 FIREBASE PRIMERO -->
+<!-- 🔥 FIREBASE COMPAT (CORRECTO PARA TU APP) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "farmastock-13696.firebaseapp.com",
-    projectId: "farmastock-13696"
-  };
-  firebase.initializeApp(firebaseConfig);
+    // 🔑 CONFIG REAL (ESTÁ BIEN ESTA)
+    const firebaseConfig = {
+        apiKey: "AIzaSyAgURmmLv1UYyt2lgeHAqyTJtP243TWE6s",
+        authDomain: "farmastock-13696.firebaseapp.com",
+        projectId: "farmastock-13696",
+        storageBucket: "farmastock-13696.appspot.com",
+        messagingSenderId: "670806587238",
+        appId: "1:670806587238:web:a1fb6a75197f1fec84baa7"
+    };
+
+    // 🔥 INICIALIZAR FIREBASE (ESTO FALTABA)
+    firebase.initializeApp(firebaseConfig);
 </script>
 
-<!-- 🔥 APP AL FINAL -->
+<!-- 🔥 TU APP -->
 <script src="app.js"></script>
 
 </body>
 </html>
+
