@@ -1,235 +1,309 @@
-/* ========= IDIOMA ========= */
-let idioma = localStorage.getItem("idioma") || "es";
+const auth = firebase.auth();
+const db = firebase.firestore();
+let usuario = null;
 
-const textos = {
-    es: {
-        login: "Ingreso a FarmaStock",
-        email: "Email",
-        pass: "Contraseña",
-        ingresar: "Ingresar / Registrarse",
-        resumen: "Resumen del negocio",
-        productos: "Productos",
-        ventas: "Ventas",
-        alertas: "Alertas",
-        config: "Configuración",
-        pro: "Modo PRO activado"
-    },
-    en: {
-        login: "FarmaStock Login",
-        email: "Email",
-        pass: "Password",
-        ingresar: "Login / Register",
-        resumen: "Business summary",
-        productos: "Products",
-        ventas: "Sales",
-        alertas: "Alerts",
-        config: "Settings",
-        pro: "PRO Mode activated"
+/* =====================
+   AUTH
+===================== */
+auth.onAuthStateChanged(user => {
+    if (user) {
+        usuario = user;
+        mostrarInicio();
+    } else {
+        mostrarLogin();
     }
-};
+});
 
-/* ========= LOGIN ========= */
-let usuario = JSON.parse(localStorage.getItem("usuario"));
-
-if (!usuario) {
-    mostrarLogin();
-} else {
-    mostrarInicio();
-}
-
+/* =====================
+   LOGIN
+===================== */
 function mostrarLogin() {
     document.getElementById("contenido").innerHTML = `
-        <h2>${textos[idioma].login}</h2>
-        <input id="email" placeholder="${textos[idioma].email}"><br>
-        <input id="pass" type="password" placeholder="${textos[idioma].pass}"><br>
-        <button class="btn" onclick="login()">${textos[idioma].ingresar}</button>
-    `;
-}
+        <div class="bienvenida">
+            <h1>FarmaStock</h1>
+            <p>Gestión de stock simple</p><br>
 
-function login() {
-    const email = email.value;
-    const pass = document.getElementById("pass").value;
+            <input id="email" placeholder="Email"><br>
+            <input id="pass" type="password" placeholder="Contraseña"><br><br>
 
-    if (!email || !pass) {
-        alert("Completá email y contraseña");
-        return;
-    }
-
-    usuario = { email, pass, pro: false };
-    localStorage.setItem("usuario", JSON.stringify(usuario));
-    mostrarInicio();
-}
-
-function logout() {
-    localStorage.removeItem("usuario");
-    location.reload();
-}
-
-/* ========= DATOS ========= */
-let productos = JSON.parse(localStorage.getItem("productos")) || [];
-let proveedores = JSON.parse(localStorage.getItem("proveedores")) || [];
-let ventas = JSON.parse(localStorage.getItem("ventas")) || [];
-
-/* ========= INICIO ========= */
-function mostrarInicio() {
-    document.getElementById("contenido").innerHTML = `
-        <h2>${textos[idioma].resumen}</h2>
-        <div class="cards">
-            <div class="card">📦 Productos: ${productos.length}</div>
-            <div class="card">⚠️ Alertas: ${productos.filter(p => alertaVencimiento(p) || alertaStock(p)).length}</div>
-            <div class="card">💰 Ventas: ${ventas.length}</div>
+            <button class="btn" onclick="login()">Ingresar</button>
+            <button class="btn" onclick="registrarse()">Registrarse</button>
         </div>
     `;
 }
 
-/* ========= PRODUCTOS ========= */
-function mostrarProductos() {
-    let filas = productos.map((p, i) => `
-        <tr>
-            <td>${p.nombre}</td>
-            <td>${p.cantidad}</td>
-            <td>${p.minimo}</td>
-            <td>${p.vencimiento}</td>
-            <td><button onclick="eliminarProducto(${i})">❌</button></td>
-        </tr>
-    `).join("");
+function login() {
+    auth.signInWithEmailAndPassword(
+        document.getElementById("email").value,
+        document.getElementById("pass").value
+    ).catch(e => alert(e.message));
+}
 
+function registrarse() {
+    auth.createUserWithEmailAndPassword(
+        document.getElementById("email").value,
+        document.getElementById("pass").value
+    ).catch(e => alert(e.message));
+}
+
+function logout() {
+    auth.signOut();
+}
+
+/* =====================
+   INICIO
+===================== */
+function mostrarInicio() {
     document.getElementById("contenido").innerHTML = `
-        <h2>📦 Stock</h2>
-        <input id="nombre" placeholder="Nombre"><br>
-        <input id="cantidad" type="number" placeholder="Cantidad"><br>
-        <input id="minimo" type="number" placeholder="Stock mínimo"><br>
-        <input id="vencimiento" type="date"><br>
-        <button class="btn" onclick="agregarProducto()">Agregar</button>
-
-        <table border="1">
-            <tr>
-                <th>Producto</th><th>Cantidad</th><th>Mínimo</th><th>Vence</th><th></th>
-            </tr>
-            ${filas}
-        </table>
+        <h2>Resumen</h2>
+        <div class="cards">
+            <div class="card">📦 Stock</div>
+            <div class="card">💰 Ventas</div>
+            <div class="card">⚠️ Alertas</div>
+        </div>
     `;
+}
+
+/* =====================
+   PRODUCTOS
+===================== */
+function mostrarProductos() {
+    db.collection("usuarios")
+      .doc(usuario.uid)
+      .collection("productos")
+      .get()
+      .then(snapshot => {
+        let filas = "";
+        snapshot.forEach(doc => {
+            const p = doc.data();
+            filas += `
+                <tr>
+                    <td>${p.nombre}</td>
+                    <td>${p.cantidad}</td>
+                    <td>${p.vencimiento}</td>
+                    <td>${p.minimo}</td>
+                </tr>
+            `;
+        });
+
+        document.getElementById("contenido").innerHTML = `
+            <h2>Productos</h2>
+
+            <input id="nombre" placeholder="Nombre"><br>
+            <input id="cantidad" type="number" placeholder="Cantidad"><br>
+            <input id="minimo" type="number" placeholder="Stock mínimo"><br>
+            <input id="vencimiento" type="date"><br><br>
+
+            <button class="btn" onclick="agregarProducto()">Agregar</button>
+
+            <table border="1" cellpadding="5">
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Vence</th>
+                    <th>Mínimo</th>
+                </tr>
+                ${filas}
+            </table>
+        `;
+      });
 }
 
 function agregarProducto() {
-    productos.push({
-        nombre: nombre.value,
-        cantidad: Number(cantidad.value),
-        minimo: Number(minimo.value),
-        vencimiento: vencimiento.value
-    });
-    guardar();
-    mostrarProductos();
+    const nombreNuevo = nombre.value.trim().toLowerCase();
+    const cantidadNueva = Number(cantidad.value);
+    const minimoNuevo = Number(minimo.value);
+    const vencimientoNuevo = vencimiento.value;
+
+    if (!nombreNuevo || !cantidadNueva) {
+        alert("Completá nombre y cantidad");
+        return;
+    }
+
+    const refProductos = db
+        .collection("usuarios")
+        .doc(usuario.uid)
+        .collection("productos");
+
+    // 🔍 Buscar si el producto ya existe
+    refProductos
+        .where("nombre_normalizado", "==", nombreNuevo)
+        .get()
+        .then(snapshot => {
+            if (!snapshot.empty) {
+                // ✅ EXISTE → SUMA STOCK
+                const docExistente = snapshot.docs[0];
+                const p = docExistente.data();
+
+                refProductos.doc(docExistente.id).update({
+                    cantidad: Number(p.cantidad) + cantidadNueva,
+                    minimo: minimoNuevo || p.minimo,
+                    vencimiento: vencimientoNuevo || p.vencimiento
+                }).then(() => mostrarProductos());
+
+            } else {
+                // 🆕 NO EXISTE → CREA PRODUCTO
+                refProductos.add({
+                    nombre: nombre.value.trim(),
+                    nombre_normalizado: nombreNuevo,
+                    cantidad: cantidadNueva,
+                    minimo: minimoNuevo,
+                    vencimiento: vencimientoNuevo,
+                    creado: firebase.firestore.FieldValue.serverTimestamp()
+                }).then(() => mostrarProductos());
+            }
+        });
 }
 
-function eliminarProducto(i) {
-    productos.splice(i, 1);
-    guardar();
-    mostrarProductos();
-}
 
-/* ========= ALERTAS ========= */
-function diasParaVencer(fecha) {
-    return Math.ceil((new Date(fecha) - new Date()) / 86400000);
-}
-
-function alertaVencimiento(p) {
-    return diasParaVencer(p.vencimiento) <= 7;
-}
-
-function alertaStock(p) {
-    return p.cantidad <= p.minimo;
-}
-
-function mostrarVencimientos() {
-    let lista = productos
-        .filter(p => alertaVencimiento(p) || alertaStock(p))
-        .map(p => `
-            <li>
-                ${p.nombre} 
-                ${alertaVencimiento(p) ? "⚠️ Vence pronto" : ""}
-                ${alertaStock(p) ? "📉 Stock bajo" : ""}
-            </li>
-        `).join("");
-
-    document.getElementById("contenido").innerHTML = `
-        <h2>⚠️ Alertas</h2>
-        <ul>${lista || "<li>Sin alertas</li>"}</ul>
-    `;
-}
-
-/* ========= VENTAS ========= */
+/* =====================
+   VENTAS (FUNCIONA)
+===================== */
 function mostrarVentas() {
-    let lista = ventas.map(v => `<li>${v.fecha} - ${v.producto}</li>`).join("");
+    db.collection("usuarios")
+      .doc(usuario.uid)
+      .collection("productos")
+      .get()
+      .then(snapshot => {
 
-    document.getElementById("contenido").innerHTML = `
-        <h2>💰 Ventas</h2>
-        <select id="ventaProducto">
-            ${productos.map((p, i) => `<option value="${i}">${p.nombre}</option>`).join("")}
-        </select>
-        <button class="btn" onclick="registrarVenta()">Vender</button>
-        <ul>${lista}</ul>
-    `;
+        if (snapshot.empty) {
+            document.getElementById("contenido").innerHTML = `
+                <h2>Ventas</h2>
+                <p>No hay productos</p>
+            `;
+            return;
+        }
+
+        let opciones = "";
+        snapshot.forEach(doc => {
+            const p = doc.data();
+            opciones += `<option value="${doc.id}">${p.nombre} (Stock ${p.cantidad})</option>`;
+        });
+
+        document.getElementById("contenido").innerHTML = `
+            <h2>Registrar venta</h2>
+
+            <select id="productoId">${opciones}</select><br><br>
+            <input id="cantidadVendida" type="number" min="1" placeholder="Cantidad"><br><br>
+
+            <button class="btn" onclick="registrarVenta()">Vender</button>
+        `;
+      });
 }
 
 function registrarVenta() {
-    let i = ventaProducto.value;
-    if (productos[i].cantidad <= 0) {
-        alert("Sin stock");
+    const productoId = document.getElementById("productoId").value;
+    const cantidad = Number(document.getElementById("cantidadVendida").value);
+
+    if (cantidad <= 0) {
+        alert("Cantidad inválida");
         return;
     }
 
-    productos[i].cantidad--;
-    ventas.push({ producto: productos[i].nombre, fecha: new Date().toLocaleString() });
-    guardar();
-    mostrarVentas();
+    const ref = db.collection("usuarios")
+        .doc(usuario.uid)
+        .collection("productos")
+        .doc(productoId);
+
+    ref.get().then(doc => {
+        const p = doc.data();
+
+        if (p.cantidad < cantidad) {
+            alert("Stock insuficiente");
+            return;
+        }
+
+        ref.update({ cantidad: p.cantidad - cantidad });
+
+        db.collection("usuarios")
+          .doc(usuario.uid)
+          .collection("ventas")
+          .add({
+              producto: p.nombre,
+              cantidad: cantidad,
+              fecha: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+        alert("Venta registrada");
+        mostrarVentas();
+    });
 }
 
-/* ========= PRO ========= */
-function mostrarReportes() {
-    if (!usuario.pro) {
-        document.getElementById("contenido").innerHTML = `
-            <h2>📊 Reportes PRO</h2>
-            <p>Disponible solo en versión PRO</p>
-            <button class="btn" onclick="activarPro()">Activar PRO</button>
-        `;
-        return;
-    }
+/* =====================
+   ALERTAS
+===================== */
+function mostrarVencimientos() {
+    db.collection("usuarios")
+      .doc(usuario.uid)
+      .collection("productos")
+      .get()
+      .then(snapshot => {
+        let lista = "";
 
+        snapshot.forEach(doc => {
+            const p = doc.data();
+
+            const cantidad = Number(p.cantidad || 0);
+            const minimo = Number(p.minimo || 0);
+
+            let dias = 999;
+            if (p.vencimiento) {
+                dias = Math.ceil(
+                    (new Date(p.vencimiento) - new Date()) / 86400000
+                );
+            }
+
+            // 🔴 ALERTA STOCK BAJO
+            if (cantidad <= minimo) {
+                lista += `
+                    <li class="alerta-roja">
+                        🚨 STOCK BAJO: <b>${p.nombre}</b>
+                        (Stock: ${cantidad} / Mínimo: ${minimo})
+                    </li>
+                `;
+            }
+            // 🟡 ALERTA VENCIMIENTO
+            else if (dias <= 7) {
+                lista += `
+                    <li class="alerta-amarilla">
+                        ⏳ VENCE PRONTO: <b>${p.nombre}</b>
+                        (${dias} días)
+                    </li>
+                `;
+            }
+        });
+
+        document.getElementById("contenido").innerHTML = `
+            <h2>Alertas</h2>
+            <ul>${lista || "<li>✅ Sin alertas</li>"}</ul>
+            <button class="btn" onclick="mostrarInicio()">Volver</button>
+        `;
+      });
+}
+
+
+/* =====================
+   SECCIONES VACÍAS (NO ROMPEN)
+===================== */
+function mostrarEmpleado() {
     document.getElementById("contenido").innerHTML = `
-        <h2>📊 Reportes PRO</h2>
-        <p>Productos: ${productos.length}</p>
-        <p>Ventas: ${ventas.length}</p>
+        <h2>Empleados</h2>
+        <p>Disponible en versión PRO</p>
     `;
 }
 
-function activarPro() {
-    usuario.pro = true;
-    localStorage.setItem("usuario", JSON.stringify(usuario));
-    mostrarReportes();
-}
-
-/* ========= CONFIG ========= */
 function mostrarConfiguracion() {
     document.getElementById("contenido").innerHTML = `
-        <h2>⚙️ Opciones</h2>
-        <p>Usuario: ${usuario.email}</p>
-        <select onchange="cambiarIdioma(this.value)">
-            <option value="es" ${idioma==="es"?"selected":""}>Español</option>
-            <option value="en" ${idioma==="en"?"selected":""}>English</option>
-        </select>
+        <h2>Opciones</h2>
+        <p>Configuración general</p>
     `;
 }
 
-function cambiarIdioma(id) {
-    idioma = id;
-    localStorage.setItem("idioma", idioma);
-    mostrarInicio();
+function mostrarReportes() {
+    document.getElementById("contenido").innerHTML = `
+        <h2>⭐ PRO</h2>
+        <p>Reportes avanzados próximamente</p>
+    `;
 }
 
-function guardar() {
-    localStorage.setItem("productos", JSON.stringify(productos));
-    localStorage.setItem("ventas", JSON.stringify(ventas));
-    localStorage.setItem("proveedores", JSON.stringify(proveedores));
-}
 
