@@ -1,29 +1,44 @@
 body {
-    font-family: Arial;
     margin: 0;
-    display: flex;
+    font-family: Arial;
 }
 
 .sidebar {
-    width: 200px;
-    background: #2c3e50;
+    width: 220px;
+    background: #1e293b;
     color: white;
-    min-height: 100vh;
+    height: 100vh;
+    position: fixed;
+}
+
+.sidebar h2 {
     padding: 15px;
 }
 
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
 .sidebar li {
+    padding: 12px;
     cursor: pointer;
-    margin: 10px 0;
+}
+
+.sidebar li:hover {
+    background: #334155;
 }
 
 .main {
+    margin-left: 220px;
     padding: 20px;
-    width: 100%;
 }
 
-input, button {
-    margin: 5px 0;
+input, select, button {
     padding: 8px;
+    margin: 4px 0;
 }
 
+button {
+    cursor: pointer;
+}
