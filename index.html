@@ -13,8 +13,9 @@
         <li onclick="mostrarInicio()">🏠 Inicio</li>
         <li onclick="mostrarProductos()">📦 Stock</li>
         <li onclick="mostrarVentas()">💰 Ventas</li>
-        <li onclick="mostrarVencimientos()">⚠️ Alertas</li>
-        <li onclick="mostrarReportes()">⭐ PRO</li>
+        <li onclick="mostrarAlertas()">⚠️ Alertas</li>
+        <li onclick="mostrarEmpleados()">👤 Empleados</li>
+        <li onclick="mostrarPro()">⭐ PRO</li>
         <li onclick="logout()">🚪 Salir</li>
     </ul>
 </div>
@@ -23,22 +24,17 @@
     <div id="contenido"></div>
 </div>
 
-<!-- 🔥 FIREBASE (ORDEN CORRECTO) -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyAgURmmLv1UYyt2lgeHAqyTJtP243TWE6s",
-  authDomain: "farmastock-13696.firebaseapp.com",
-  projectId: "farmastock-13696",
-  storageBucket: "farmastock-13696.appspot.com",
-  messagingSenderId: "670806587238",
-  appId: "1:670806587238:web:a1fb6a75197f1fec84baa7"
-};
-
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp({
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_DOMINIO.firebaseapp.com",
+  projectId: "TU_PROJECT_ID"
+});
 </script>
 
 <script src="app.js"></script>
