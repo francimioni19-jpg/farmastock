@@ -1,208 +1,46 @@
-const auth = firebase.auth();
-const db = firebase.firestore();
-let usuario = null;
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>FarmaStock</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-/* =====================
-   AUTH
-===================== */
-auth.onAuthStateChanged(user => {
-    if (user) {
-        usuario = user;
-        document.getElementById("menu").style.display = "block";
-        mostrarInicio();
-    } else {
-        document.getElementById("menu").style.display = "none";
-        mostrarLogin();
-    }
-});
+<div class="sidebar" id="menu" style="display:none">
+    <h2>💊 FarmaStock</h2>
+    <ul>
+        <li onclick="mostrarInicio()">🏠 Inicio</li>
+        <li onclick="mostrarProductos()">📦 Stock</li>
+        <li onclick="mostrarVentas()">💰 Ventas</li>
+        <li onclick="mostrarVencimientos()">⚠️ Alertas</li>
+        <li onclick="mostrarReportes()">⭐ PRO</li>
+        <li onclick="logout()">🚪 Salir</li>
+    </ul>
+</div>
 
-/* =====================
-   LOGIN
-===================== */
-function mostrarLogin() {
-    document.getElementById("contenido").innerHTML = `
-        <h1>FarmaStock</h1>
-        <input id="email" type="email" placeholder="Email"><br>
-        <input id="pass" type="password" placeholder="Contraseña"><br><br>
-        <button onclick="login()">Ingresar</button>
-        <button onclick="registrarse()">Registrarse</button>
-    `;
-}
+<div class="main">
+    <div id="contenido"></div>
+</div>
 
-function login() {
-    const email = document.getElementById("email").value.trim();
-    const pass = document.getElementById("pass").value.trim();
+<!-- 🔥 FIREBASE (ORDEN CORRECTO) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
-    if (!email || !pass) {
-        alert("Completá email y contraseña");
-        return;
-    }
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAgURmmLv1UYyt2lgeHAqyTJtP243TWE6s",
+  authDomain: "farmastock-13696.firebaseapp.com",
+  projectId: "farmastock-13696",
+  storageBucket: "farmastock-13696.appspot.com",
+  messagingSenderId: "670806587238",
+  appId: "1:670806587238:web:a1fb6a75197f1fec84baa7"
+};
 
-    auth.signInWithEmailAndPassword(email, pass)
-        .catch(e => alert(mensajeHumano(e.code)));
-}
+firebase.initializeApp(firebaseConfig);
+</script>
 
-function registrarse() {
-    const email = document.getElementById("email").value.trim();
-    const pass = document.getElementById("pass").value.trim();
-
-    if (!email || !pass) {
-        alert("Completá email y contraseña");
-        return;
-    }
-
-    auth.createUserWithEmailAndPassword(email, pass)
-        .catch(e => alert(mensajeHumano(e.code)));
-}
-
-function logout() {
-    auth.signOut();
-}
-
-/* =====================
-   INICIO
-===================== */
-function mostrarInicio() {
-    document.getElementById("contenido").innerHTML = `
-        <h2>Panel principal</h2>
-        <p>Bienvenido a FarmaStock</p>
-    `;
-}
-
-/* =====================
-   PRODUCTOS
-===================== */
-function mostrarProductos() {
-    db.collection("usuarios").doc(usuario.uid).collection("productos").get()
-    .then(snapshot => {
-        let filas = "";
-        snapshot.forEach(doc => {
-            const p = doc.data();
-            filas += `
-                <tr>
-                    <td>${p.nombre}</td>
-                    <td>${p.cantidad}</td>
-                    <td>${p.minimo}</td>
-                    <td>${p.vencimiento}</td>
-                </tr>
-            `;
-        });
-
-        document.getElementById("contenido").innerHTML = `
-            <h2>Stock</h2>
-            <input id="nombre" placeholder="Producto"><br>
-            <input id="cantidad" type="number" placeholder="Cantidad"><br>
-            <input id="minimo" type="number" placeholder="Stock mínimo"><br>
-            <input id="vencimiento" type="date"><br><br>
-            <button onclick="agregarProducto()">Agregar</button>
-
-            <table border="1">
-                <tr>
-                    <th>Nombre</th>
-                    <th>Cantidad</th>
-                    <th>Mínimo</th>
-                    <th>Vence</th>
-                </tr>
-                ${filas}
-            </table>
-        `;
-    });
-}
-
-function agregarProducto() {
-    db.collection("usuarios")
-      .doc(usuario.uid)
-      .collection("productos")
-      .add({
-          nombre: nombre.value,
-          cantidad: Number(cantidad.value),
-          minimo: Number(minimo.value),
-          vencimiento: vencimiento.value
-      }).then(mostrarProductos);
-}
-
-/* =====================
-   VENTAS
-===================== */
-function mostrarVentas() {
-    db.collection("usuarios").doc(usuario.uid).collection("productos").get()
-    .then(snapshot => {
-        let opciones = "";
-        snapshot.forEach(doc => {
-            const p = doc.data();
-            opciones += `<option value="${doc.id}">${p.nombre} (stock ${p.cantidad})</option>`;
-        });
-
-        document.getElementById("contenido").innerHTML = `
-            <h2>Ventas</h2>
-            <select id="prod">${opciones}</select><br>
-            <input id="cant" type="number" placeholder="Cantidad"><br><br>
-            <button onclick="registrarVenta()">Vender</button>
-        `;
-    });
-}
-
-function registrarVenta() {
-    const id = prod.value;
-    const c = Number(cant.value);
-
-    const ref = db.collection("usuarios")
-                  .doc(usuario.uid)
-                  .collection("productos")
-                  .doc(id);
-
-    ref.get().then(doc => {
-        const p = doc.data();
-        if (p.cantidad < c) {
-            alert("Stock insuficiente");
-            return;
-        }
-        ref.update({ cantidad: p.cantidad - c });
-        alert("Venta registrada");
-        mostrarVentas();
-    });
-}
-
-/* =====================
-   ALERTAS
-===================== */
-function mostrarVencimientos() {
-    db.collection("usuarios").doc(usuario.uid).collection("productos").get()
-    .then(snapshot => {
-        let lista = "";
-        snapshot.forEach(doc => {
-            const p = doc.data();
-            if (p.cantidad <= p.minimo) {
-                lista += `<li>⚠️ ${p.nombre} bajo stock</li>`;
-            }
-        });
-
-        document.getElementById("contenido").innerHTML = `
-            <h2>Alertas</h2>
-            <ul>${lista || "<li>Sin alertas</li>"}</ul>
-        `;
-    });
-}
-
-/* =====================
-   PRO
-===================== */
-function mostrarReportes() {
-    document.getElementById("contenido").innerHTML = `
-        <h2>Modo PRO ⭐</h2>
-        <p>Función disponible próximamente</p>
-    `;
-}
-
-/* =====================
-   MENSAJES
-===================== */
-function mensajeHumano(code) {
-    switch (code) {
-        case "auth/invalid-email": return "Email inválido";
-        case "auth/email-already-in-use": return "Email ya registrado";
-        case "auth/weak-password": return "Contraseña muy corta";
-        default: return "Error al ingresar";
-    }
-}
-
+<script src="app.js"></script>
+</body>
+</html>
