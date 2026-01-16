@@ -1,68 +1,42 @@
 const auth = firebase.auth();
 const db = firebase.firestore();
-
 let usuario = null;
+let rol = "admin";
 
-/* =====================
-   AUTH
-===================== */
+/* ========= AUTH ========= */
 auth.onAuthStateChanged(user => {
     if (user) {
         usuario = user;
-        document.getElementById("menu").style.display = "block";
-        mostrarInicio();
+        cargarRol();
     } else {
-        document.getElementById("menu").style.display = "none";
         mostrarLogin();
     }
 });
 
-/* =====================
-   LOGIN
-===================== */
 function mostrarLogin() {
+    document.getElementById("menu").style.display = "none";
     document.getElementById("contenido").innerHTML = `
-        <div class="bienvenida">
-            <h1>FarmaStock</h1>
-            <input id="email" placeholder="Email"><br>
-            <input id="pass" type="password" placeholder="Contraseña"><br><br>
-            <button class="btn" onclick="login()">Ingresar</button>
-            <button class="btn" onclick="registrarse()">Registrarse</button>
-        </div>
+        <h2>FarmaStock</h2>
+        <input id="email" placeholder="Email"><br>
+        <input id="pass" type="password" placeholder="Contraseña"><br><br>
+        <button onclick="login()">Ingresar</button>
+        <button onclick="registrarse()">Registrarse</button>
     `;
 }
 
 function login() {
-    const email = document.getElementById("email").value.trim();
-    const pass = document.getElementById("pass").value.trim();
-
-    if (!email.includes("@")) {
-        alert("Email inválido");
-        return;
-    }
-    if (pass.length < 6) {
-        alert("La contraseña debe tener al menos 6 caracteres");
-        return;
-    }
-
-    auth.signInWithEmailAndPassword(email, pass)
+    auth.signInWithEmailAndPassword(email.value, pass.value)
         .catch(e => alert(e.message));
 }
 
 function registrarse() {
-    const email = document.getElementById("email").value.trim();
-    const pass = document.getElementById("pass").value.trim();
-
-    if (!email.includes("@")) {
-        alert("Email inválido");
-        return;
-    }
-    if (pass.length < 6) {
-        alert("La contraseña debe tener al menos 6 caracteres");
-        return;
-    }
-
-    auth.createUserWithEmailAndPassword(email, pass)
+    auth.createUserWithEmailAndPassword(email.value, pass.value)
+        .then(res => {
+            db.collection("usuarios").doc(res.user.uid).set({
+                rol: "admin",
+                pro: false
+            });
+        })
         .catch(e => alert(e.message));
 }
 
@@ -70,159 +44,181 @@ function logout() {
     auth.signOut();
 }
 
-/* =====================
-   INICIO
-===================== */
+/* ========= ROLES ========= */
+function cargarRol() {
+    db.collection("usuarios").doc(usuario.uid).get().then(doc => {
+        rol = doc.data().rol;
+        document.getElementById("menu").style.display = "block";
+        mostrarInicio();
+    });
+}
+
+/* ========= INICIO ========= */
 function mostrarInicio() {
     document.getElementById("contenido").innerHTML = `
-        <h2>Panel principal</h2>
-        <p>Bienvenido a FarmaStock</p>
+        <h2>Bienvenido a FarmaStock</h2>
+        <p>Gestión de stock profesional</p>
     `;
 }
 
-/* =====================
-   PRODUCTOS
-===================== */
+/* ========= STOCK ========= */
 function mostrarProductos() {
-    db.collection("usuarios")
-      .doc(usuario.uid)
-      .collection("productos")
-      .get()
-      .then(snapshot => {
+    db.collection("usuarios").doc(usuario.uid).collection("productos").get()
+    .then(snap => {
         let filas = "";
-        snapshot.forEach(doc => {
-            const p = doc.data();
+        snap.forEach(d => {
+            const p = d.data();
             filas += `
                 <tr>
                     <td>${p.nombre}</td>
                     <td>${p.cantidad}</td>
                     <td>${p.minimo}</td>
                     <td>${p.vencimiento}</td>
+                    <td>
+                        <button onclick="editarProducto('${d.id}')">✏️</button>
+                        ${rol === "admin" ? `<button onclick="eliminarProducto('${d.id}')">🗑️</button>` : ""}
+                    </td>
                 </tr>
             `;
         });
 
         document.getElementById("contenido").innerHTML = `
             <h2>Stock</h2>
-            <input id="nombre" placeholder="Producto"><br>
-            <input id="cantidad" type="number" placeholder="Cantidad"><br>
-            <input id="minimo" type="number" placeholder="Stock mínimo"><br>
-            <input id="vencimiento" type="date"><br><br>
-            <button class="btn" onclick="agregarProducto()">Agregar</button>
-
+            <input id="nombre" placeholder="Producto">
+            <input id="cantidad" type="number" placeholder="Cantidad">
+            <input id="minimo" type="number" placeholder="Mínimo">
+            <input id="vencimiento" type="date">
+            <button onclick="agregarProducto()">Agregar</button>
             <table border="1">
-                <tr><th>Producto</th><th>Cantidad</th><th>Mínimo</th><th>Vence</th></tr>
+                <tr><th>Producto</th><th>Cant</th><th>Min</th><th>Vence</th><th></th></tr>
                 ${filas}
             </table>
         `;
-      });
+    });
 }
 
 function agregarProducto() {
-    db.collection("usuarios")
-      .doc(usuario.uid)
-      .collection("productos")
-      .add({
-        nombre: nombre.value,
+    const ref = db.collection("usuarios").doc(usuario.uid).collection("productos");
+    ref.where("nombre", "==", nombre.value).get().then(snap => {
+        if (!snap.empty) {
+            const d = snap.docs[0];
+            d.ref.update({ cantidad: d.data().cantidad + Number(cantidad.value) });
+        } else {
+            ref.add({
+                nombre: nombre.value,
+                cantidad: Number(cantidad.value),
+                minimo: Number(minimo.value),
+                vencimiento: vencimiento.value
+            });
+        }
+        mostrarProductos();
+    });
+}
+
+function eliminarProducto(id) {
+    if (confirm("Eliminar producto?")) {
+        db.collection("usuarios").doc(usuario.uid)
+        .collection("productos").doc(id).delete()
+        .then(mostrarProductos);
+    }
+}
+
+function editarProducto(id) {
+    const ref = db.collection("usuarios").doc(usuario.uid)
+        .collection("productos").doc(id);
+
+    ref.get().then(d => {
+        const p = d.data();
+        document.getElementById("contenido").innerHTML = `
+            <h2>Editar Producto</h2>
+            <input id="cantidad" type="number" value="${p.cantidad}">
+            <input id="minimo" type="number" value="${p.minimo}">
+            <input id="vencimiento" type="date" value="${p.vencimiento}">
+            <button onclick="guardarEdicion('${id}')">Guardar</button>
+        `;
+    });
+}
+
+function guardarEdicion(id) {
+    db.collection("usuarios").doc(usuario.uid)
+    .collection("productos").doc(id).update({
         cantidad: Number(cantidad.value),
         minimo: Number(minimo.value),
         vencimiento: vencimiento.value
-      })
-      .then(() => mostrarProductos());
+    }).then(mostrarProductos);
 }
 
-/* =====================
-   VENTAS
-===================== */
+/* ========= VENTAS ========= */
 function mostrarVentas() {
-    db.collection("usuarios")
-      .doc(usuario.uid)
-      .collection("productos")
-      .get()
-      .then(snapshot => {
-        let opciones = "";
-        snapshot.forEach(doc => {
-            const p = doc.data();
-            opciones += `<option value="${doc.id}">${p.nombre} (Stock ${p.cantidad})</option>`;
+    db.collection("usuarios").doc(usuario.uid).collection("productos").get()
+    .then(snap => {
+        let ops = "";
+        snap.forEach(d => {
+            const p = d.data();
+            ops += `<option value="${d.id}">${p.nombre} (${p.cantidad})</option>`;
         });
 
         document.getElementById("contenido").innerHTML = `
             <h2>Ventas</h2>
-            <select id="producto">${opciones}</select><br>
-            <input id="cantidadVenta" type="number" placeholder="Cantidad"><br><br>
-            <button class="btn" onclick="vender()">Vender</button>
+            <select id="producto">${ops}</select>
+            <input id="cantidad" type="number">
+            <button onclick="vender()">Vender</button>
         `;
-      });
+    });
 }
 
 function vender() {
-    const id = producto.value;
-    const cant = Number(cantidadVenta.value);
+    const ref = db.collection("usuarios").doc(usuario.uid)
+        .collection("productos").doc(producto.value);
 
-    if (cant <= 0) {
-        alert("Cantidad inválida");
-        return;
-    }
-
-    const ref = db.collection("usuarios")
-                  .doc(usuario.uid)
-                  .collection("productos")
-                  .doc(id);
-
-    ref.get().then(doc => {
-        const p = doc.data();
-        if (p.cantidad < cant) {
+    ref.get().then(d => {
+        const p = d.data();
+        if (p.cantidad < Number(cantidad.value)) {
             alert("Stock insuficiente");
             return;
         }
-
-        ref.update({ cantidad: p.cantidad - cant });
-
-        db.collection("usuarios")
-          .doc(usuario.uid)
-          .collection("ventas")
-          .add({
-            producto: p.nombre,
-            cantidad: cant,
-            fecha: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
+        ref.update({ cantidad: p.cantidad - Number(cantidad.value) });
         alert("Venta registrada");
         mostrarVentas();
     });
 }
 
-/* =====================
-   ALERTAS
-===================== */
-function mostrarVencimientos() {
-    db.collection("usuarios")
-      .doc(usuario.uid)
-      .collection("productos")
-      .get()
-      .then(snapshot => {
-        let lista = "";
-        snapshot.forEach(doc => {
-            const p = doc.data();
-            const dias = Math.ceil((new Date(p.vencimiento) - new Date()) / 86400000);
+/* ========= ALERTAS ========= */
+function mostrarAlertas() {
+    db.collection("usuarios").doc(usuario.uid).collection("productos").get()
+    .then(snap => {
+        let l = "";
+        snap.forEach(d => {
+            const p = d.data();
+            const dias = (new Date(p.vencimiento) - new Date()) / 86400000;
             if (p.cantidad <= p.minimo || dias <= 7) {
-                lista += `<li>⚠️ ${p.nombre} - Stock ${p.cantidad} - ${dias} días</li>`;
+                l += `<li>⚠️ ${p.nombre}</li>`;
             }
         });
-
         document.getElementById("contenido").innerHTML = `
             <h2>Alertas</h2>
-            <ul>${lista || "<li>Sin alertas</li>"}</ul>
+            <ul>${l || "<li>Sin alertas</li>"}</ul>
         `;
-      });
+    });
 }
 
-/* =====================
-   PRO
-===================== */
-function mostrarReportes() {
+/* ========= EMPLEADOS ========= */
+function mostrarEmpleados() {
+    if (rol !== "admin") {
+        alert("Solo admin");
+        return;
+    }
     document.getElementById("contenido").innerHTML = `
-        <h2>Modo PRO ⭐</h2>
-        <p>Disponible próximamente</p>
+        <h2>Empleados</h2>
+        <p>Función activa (roles ya implementados)</p>
+    `;
+}
+
+/* ========= PRO ========= */
+function mostrarPro() {
+    document.getElementById("contenido").innerHTML = `
+        <h2>⭐ Modo PRO</h2>
+        <p>Reportes avanzados</p>
+        <p>🔒 Bloqueado – Activar con pago</p>
     `;
 }
