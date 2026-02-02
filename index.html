@@ -7,24 +7,43 @@
 </head>
 <body>
 
-<div id="contenido">
-    <h2>Cargando FarmaStock...</h2>
+<div class="sidebar" id="menu" style="display:none">
+    <h2>💊 FarmaStock</h2>
+    <ul>
+        <li onclick="mostrarInicio()">🏠 Inicio</li>
+        <li onclick="mostrarProductos()">📦 Stock</li>
+        <li onclick="mostrarVencimientos()">⚠️ Alertas</li>
+        <li onclick="mostrarVentas()">💰 Ventas</li>
+        <li onclick="mostrarReportes()">📊 PRO</li>
+        <li onclick="logout()">🚪 Salir</li>
+    </ul>
 </div>
 
-<!-- FIREBASE -->
+<div class="main">
+    <div id="contenido">Cargando FarmaStock...</div>
+</div>
+
+<!-- 🔥 FIREBASE SDKs (COMPAT, EN ESTE ORDEN) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "TU_API_KEY_REAL",
-  authDomain: "TU_PROYECTO.firebaseapp.com",
-  projectId: "TU_PROYECTO",
-};
-firebase.initializeApp(firebaseConfig);
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgURmmLv1UYyt2lgeHAqyTJtP243TWE6s",
+    authDomain: "farmastock-13696.firebaseapp.com",
+    projectId: "farmastock-13696",
+    storageBucket: "farmastock-13696.appspot.com",
+    messagingSenderId: "670806587238",
+    appId: "1:670806587238:web:a1fb6a75197f1fec84baa7"
+  };
+
+  // 🔥 INICIALIZAR FIREBASE (FORMA CORRECTA)
+  firebase.initializeApp(firebaseConfig);
 </script>
 
+<!-- 🔥 TU APP -->
 <script src="app.js"></script>
+
 </body>
 </html>
