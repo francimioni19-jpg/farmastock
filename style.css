@@ -1,44 +1,17 @@
 body {
-    margin: 0;
     font-family: Arial;
-}
-
-.sidebar {
-    width: 220px;
-    background: #1e293b;
-    color: white;
-    height: 100vh;
-    position: fixed;
-}
-
-.sidebar h2 {
-    padding: 15px;
-}
-
-.sidebar ul {
-    list-style: none;
-    padding: 0;
-}
-
-.sidebar li {
-    padding: 12px;
-    cursor: pointer;
-}
-
-.sidebar li:hover {
-    background: #334155;
-}
-
-.main {
-    margin-left: 220px;
+    background: #f5f5f5;
     padding: 20px;
 }
-
-input, select, button {
-    padding: 8px;
-    margin: 4px 0;
-}
-
 button {
-    cursor: pointer;
+    margin: 5px;
+    padding: 8px;
+}
+input, select {
+    margin: 5px;
+    padding: 5px;
+}
+table {
+    margin-top: 10px;
+    background: white;
 }
