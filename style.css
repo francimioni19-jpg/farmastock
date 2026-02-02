@@ -1,4 +1,7 @@
 body {
+    background: red !important;
+}
+body {
     margin: 0;
     font-family: Arial;
     display: flex;
