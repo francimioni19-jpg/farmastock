@@ -1,23 +1,29 @@
 body {
-    background: red !important;
-}
-body {
     margin: 0;
-    font-family: Arial;
-    display: flex;
-    background: #f4f6f8;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1e88e5, #42a5f5);
+    min-height: 100vh;
 }
 
+/* Layout */
+.main {
+    padding: 30px;
+}
+
+/* Sidebar */
 .sidebar {
     width: 220px;
-    background: #1e293b;
+    background: #0d47a1;
     color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
     height: 100vh;
-    padding: 15px;
+    padding: 20px;
 }
 
 .sidebar h2 {
-    text-align: center;
+    margin-top: 0;
 }
 
 .sidebar ul {
@@ -28,36 +34,64 @@ body {
 .sidebar li {
     padding: 10px;
     cursor: pointer;
+    border-radius: 5px;
 }
 
 .sidebar li:hover {
-    background: #334155;
+    background: rgba(255,255,255,0.2);
 }
 
+/* Contenido */
 .main {
-    flex: 1;
-    padding: 20px;
+    margin-left: 240px;
 }
 
-input, button, select {
+/* Botones */
+button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    background: #1e88e5;
+    color: white;
+    margin: 5px;
+}
+
+button:hover {
+    background: #1565c0;
+}
+
+/* Inputs */
+input, select {
     padding: 8px;
     margin: 5px 0;
-    display: block;
-}
-
-table {
-    margin-top: 15px;
-    border-collapse: collapse;
-}
-
-table th, table td {
+    width: 220px;
+    border-radius: 4px;
     border: 1px solid #ccc;
-    padding: 6px 10px;
 }
 
-.login {
-    max-width: 300px;
-    margin: 80px auto;
+/* Cards */
+.cards {
+    display: flex;
+    gap: 20px;
+}
+
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 200px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+/* Login */
+.bienvenida {
+    background: white;
+    max-width: 350px;
+    margin: 100px auto;
+    padding: 30px;
+    border-radius: 12px;
     text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
