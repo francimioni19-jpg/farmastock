@@ -7,38 +7,24 @@
 </head>
 <body>
 
-<div class="sidebar" id="menu" style="display:none">
-    <h2>💊 FarmaStock</h2>
-    <ul>
-        <li onclick="mostrarInicio()">🏠 Inicio</li>
-        <li onclick="mostrarProductos()">📦 Stock</li>
-        <li onclick="mostrarVentas()">💰 Ventas</li>
-        <li onclick="mostrarAlertas()">⚠️ Alertas</li>
-        <li onclick="mostrarEmpleados()">👤 Empleados</li>
-        <li onclick="mostrarPro()">⭐ PRO</li>
-        <li onclick="logout()">🚪 Salir</li>
-    </ul>
+<div id="contenido">
+    <h2>Cargando FarmaStock...</h2>
 </div>
 
-<div class="main">
-    <div id="contenido"></div>
-</div>
-
-<!-- Firebase -->
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-firebase.initializeApp({
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_DOMINIO.firebaseapp.com",
-  projectId: "TU_PROJECT_ID"
-});
+const firebaseConfig = {
+  apiKey: "TU_API_KEY_REAL",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO",
+};
+firebase.initializeApp(firebaseConfig);
 </script>
 
 <script src="app.js"></script>
 </body>
 </html>
-
-
